@@ -7,8 +7,9 @@ class Program
 {
     static void Main(string[] args)
     {
+
         using (var context = new PharmacyContext(new DbContextOptionsBuilder<PharmacyContext>()
-    .UseSqlServer("PharmacyDatabase").Options))
+            .UseSqlServer("PharmacyDatabase").Options))
         {
             // Заповнення бази даних початковими значеннями
             SeedDatabase(context);
@@ -46,7 +47,6 @@ class Program
         if (!context.Pharmacists.Any())
         {
             context.Pharmacists.Add(new Pharmacist { SurnameNamePatronymic = "Коваленко Олена Петрівна" });
-            // Додайте інші початкові дані тут
             context.SaveChanges();
         }
     }

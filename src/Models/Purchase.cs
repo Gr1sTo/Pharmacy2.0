@@ -6,6 +6,10 @@ namespace Pharmacy.src.Models
     [Table("purchase")]
     public class Purchase
     {
+        [Key]
+        [Column("Id_Purchase")]
+        public int Id_Purchase { get; set; } 
+
         [ForeignKey("Shopper")]
         [Column("PhoneNum")]
         public string PhoneNum { get; set; }

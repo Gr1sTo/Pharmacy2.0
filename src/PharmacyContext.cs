@@ -5,11 +5,17 @@ namespace Pharmacy.src
 {
     public class PharmacyContext : DbContext
     {
+        public PharmacyContext(DbContextOptions<PharmacyContext> options)
+            : base(options)
+        {
+
+        }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer("Ваша строка підключення тут");
+                optionsBuilder.UseSqlServer("PharmacyDatabase");
             }
         }
 
@@ -24,17 +30,9 @@ namespace Pharmacy.src
         public DbSet<Producer> Producers { get; set; }
         public DbSet<Storage> Storages { get; set; }
 
-        public PharmacyContext(DbContextOptions<PharmacyContext> options)
-            : base(options)
-        {
-        }
-
-        /*public PharmacyContext()
-        {
-        }*/
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             //Shopper з Purchase (Один-до-багатьох)
             modelBuilder.Entity<Shopper>()
                 .HasMany(s => s.Purchases)

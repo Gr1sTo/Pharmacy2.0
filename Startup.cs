@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿/*using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Pharmacy.src;
@@ -25,4 +25,4 @@ namespace Pharmacy
                 options.UseSqlServer(Configuration.GetConnectionString("PharmacyDatabase")));
         }
     }
-}
+}*/
