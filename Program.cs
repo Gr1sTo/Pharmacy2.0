@@ -226,7 +226,7 @@ class Program
             //Функція групування
             void GroupByPharmacist()
             {
-                var bills = context.Bills.AsEnumerable(); // Отримання всіх даних рахунків-фактур з БД
+                var bills = context.Bills.AsEnumerable(); // Отримання всіх даних рахунків з БД
 
                 var result = bills
                                 .GroupBy(b => b.IDPharmacist)
@@ -259,7 +259,7 @@ class Program
             //Функція суми
             void SumFinalPrices()
             {
-                // Обчислення загальної суми фінальних цін усіх рахунків-фактур
+                // Обчислення загальної суми фінальних цін усіх рахунків
                 var totalPrice = context.Bills.Sum(b => b.FinalPrice);
 
                 Console.WriteLine($"Total price of all bills: {totalPrice}");
@@ -315,10 +315,10 @@ class Program
             //Функція явного завантаження
             void ExplicitLoading()
             {
-                // Вибірка першого рахунку-фактури
+                // Вибірка першого рахунку
                 var bill = context.Bills.FirstOrDefault();
 
-                // Явне завантаження даних про фармацевта, пов'язаного з рахунком-фактурою
+                // Явне завантаження даних про фармацевта, пов'язаного з рахунком
                 context.Entry(bill).Reference(b => b.Pharmacist).Load();
 
                 Console.WriteLine("Result of Explicit Loading:\n-------------------------------------------------------------------------------");
