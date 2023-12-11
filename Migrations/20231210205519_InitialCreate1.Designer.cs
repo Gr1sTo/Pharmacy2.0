@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Pharmacy.src;
+using Pharmacy;
 
 #nullable disable
 
 namespace Pharmacy.Migrations
 {
     [DbContext(typeof(PharmacyContext))]
-    [Migration("20231128092002_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20231210205519_InitialCreate1")]
+    partial class InitialCreate1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -312,7 +312,8 @@ namespace Pharmacy.Migrations
                         .HasColumnType("nvarchar(12)")
                         .HasColumnName("phoneNum");
 
-                    b.Property<float>("DiscountValue")
+                    b.Property<float?>("DiscountValue")
+                        .IsRequired()
                         .HasColumnType("real")
                         .HasColumnName("discountValue");
 

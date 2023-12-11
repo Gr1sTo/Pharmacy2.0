@@ -12,7 +12,7 @@ namespace Pharmacy.src.Models
         public int ID { get; set; }
 
         [Required]
-        [StringLength(5)]
+        [StringLength(10)]
         [Column("type_")]
         public string Type { get; set; }
 

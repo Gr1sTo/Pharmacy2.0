@@ -1,10 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Pharmacy.src.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Pharmacy.src
+namespace Pharmacy
 {
     public class PharmacyContext : DbContext
     {
+        public PharmacyContext() 
+        {
+
+        }
+
         public PharmacyContext(DbContextOptions<PharmacyContext> options)
             : base(options)
         {
@@ -13,10 +19,7 @@ namespace Pharmacy.src
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer("PharmacyDatabase");
-            }
+            optionsBuilder.UseSqlServer("Server=DESKTOP-EUJTV8V;Database=Pharmacy3;Integrated Security = true; TrustServerCertificate=true;");
         }
 
         public DbSet<Shopper> Shoppers { get; set; }

@@ -14,7 +14,8 @@ namespace Pharmacy.src.Models
         public string PhoneNum { get; set; }
 
         [Column("discountValue")]
-        public float DiscountValue { get; set; }
+        [Required]
+        public float? DiscountValue { get; set; }
 
         [StringLength(15)]
         [Column("ID_discountcard")]
