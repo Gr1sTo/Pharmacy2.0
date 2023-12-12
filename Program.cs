@@ -30,15 +30,16 @@ class Program
             //Функція для внесення базових даних до бази даних
             void StartData()
             {
+                
                 // Додавання даних для Pharmacist
                 var pharmacists = new List<Pharmacist>
                 {
-                    new Pharmacist { SurnameNamePatronymic = "Іваненко Іван Іванович" },
-                    new Pharmacist { SurnameNamePatronymic = "Петрова Марія Петрівна" }
+                    new Pharmacist { SurnameNamePatronymic = "Коваленко Андрый Іванович" },
+                    new Pharmacist { SurnameNamePatronymic = "Кузьма Марія Петрівна" }
                 };
                 context.Pharmacists.AddRange(pharmacists);
                 context.SaveChanges();
-                // Додавання даних для Producer
+               /*// Додавання даних для Producer
                 var producers = new List<Producer>
                 {
                     new Producer { Name = "Лікарняний Виробник", LicenseNum = 12345 },
@@ -79,7 +80,7 @@ class Program
                 context.Shoppers.AddRange(shoppers);
                 context.SaveChanges();*/
                 // Додавання даних для Storage
-                var storages = new List<Storage>
+                /*var storages = new List<Storage>
                 {
                     new Storage { Type = "dry", ShelfCapacity = 100 },
                     new Storage { Type = "wet", ShelfCapacity = 50 }
@@ -93,7 +94,7 @@ class Program
                     new MedicineList { MedArticle = 102, Price = 15.00M, Count = 3, BillID = 1 }
                 };
                 context.MedicineLists.AddRange(medicineLists);
-                context.SaveChanges();
+                context.SaveChanges();*/
             }
             //StartData();
 
@@ -376,7 +377,7 @@ class Program
             //Функція виклику збереженої функції в SQL
             void UseSavedFunction()
             {
-                int pharmacistId = 1; // ID фармацевта, рахунки-фактури якого ми хочемо знайти
+                int pharmacistId = 1; // ID фармацевта, рахунки якого ми хочемо знайти
 
                 var bills = context.Bills.FromSqlRaw("SELECT * FROM dbo.GetBillsByPharmacist({0})", pharmacistId).ToList();
 
@@ -406,6 +407,26 @@ class Program
                 }
             }
             //UseSavedProcedure();
+
+            //Захист
+            //Тор 3 фармацепта по виписаним чекам
+            void FindTopPharmacists()
+            {
+                var topPharmacists = context.Bills
+                    .GroupBy(b => b.IDPharmacist)
+                    .Select(group => new { PharmacistId = group.Key, BillsCount = group.Count() })
+                    .OrderByDescending(x => x.BillsCount)
+                    .Take(3)
+                    .ToList();
+
+                Console.WriteLine("Top 3 Pharmacists:\n");
+
+                foreach (var pharmacist in topPharmacists)
+                {
+                    Console.WriteLine($"Pharmacist ID: {pharmacist.PharmacistId}, Number of Bills: {pharmacist.BillsCount}");
+                }
+            }
+            //FindTopPharmacists();
         }
     }
 }
