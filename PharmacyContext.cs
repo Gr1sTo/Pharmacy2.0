@@ -87,6 +87,6 @@ namespace Pharmacy
             base.OnModelCreating(modelBuilder);
         }
 
+        
     }
-
 }

@@ -1,12 +1,15 @@
 ﻿using Pharmacy;
-using Pharmacy.src;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Pharmacy.src.Models;
 
 class Program
 {
-    static void Main()
+    public static readonly object locker = new object();
+    public static SemaphoreSlim semaphore = new SemaphoreSlim(1);
+    public static Mutex mutex = new Mutex();
+
+    static async Task Main(string[] args)
     {
         var builder = new ConfigurationBuilder();
 
@@ -427,6 +430,403 @@ class Program
                 }
             }
             //FindTopPharmacists();
+
+
+            //----------------Lab4----------------
+            //Threading
+
+            Thread shopperThread1 = new Thread(GenerateShoppers);
+            Thread shopperThread2 = new Thread(GenerateShoppers);
+
+            shopperThread1.Start();
+            shopperThread2.Start();
+
+            shopperThread1.Join();
+            shopperThread2.Join();
+
+            Console.WriteLine("Збереження клiєнтiв за допомогою Threading завершено");
+
+            Thread medicineThread1 = new Thread(GenerateMedicines);
+            Thread medicineThread2 = new Thread(GenerateMedicines);
+
+            medicineThread1.Start();
+            medicineThread2.Start();
+
+            medicineThread1.Join();
+            medicineThread2.Join();
+
+            Console.WriteLine("Збереження рiєлторів за допомогою Threading завершено");
+
+            Thread producerThread1 = new Thread(GenerateProducers);
+            Thread producerThread2 = new Thread(GenerateProducers);
+
+            producerThread1.Start();
+            producerThread2.Start();
+
+            producerThread1.Join();
+            producerThread2.Join();
+
+            Console.WriteLine("Збереження власникiв за допомогою Threading завершено");
+
+            Thread loadShopperThread = new Thread(DisplayShoppers);
+            Thread loadMedicineThread = new Thread(DisplayMedicines);
+            Thread loadProducerThread = new Thread(DisplayProducers);
+
+            loadShopperThread.Start();
+            loadMedicineThread.Start();
+            loadProducerThread.Start();
+
+            loadShopperThread.Join();
+            loadMedicineThread.Join();
+            loadProducerThread.Join();
+
+            Console.WriteLine("Зчитування та вивiд клiєнтiв, власникiв та рiєлторiв завершено");
+
+            //Створення та збереження покупців до бази даних за допомогою Monitor
+            void GenerateShoppers()
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    Monitor.Enter(locker);
+                    try
+                    {
+                        string shopperPhoneNum = "380" + i.ToString().PadLeft(9, '0');
+                        float discountValue = (i % 5) * 0.05f;
+                        string idDiscountCard = "DC" + i.ToString().PadLeft(4, '0');
+
+                        var shopper = new Shopper { PhoneNum = shopperPhoneNum, DiscountValue = discountValue, IDDiscountCard = idDiscountCard };
+                        context.Shoppers.Add(shopper);
+                        context.SaveChanges();
+                    }
+                    finally
+                    {
+                        Monitor.Exit(locker);
+                    }
+                }
+            }
+
+            //Створення та збереження ліків до бази даних за допомогою Semaphore
+            void GenerateMedicines()
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    semaphore.Wait();
+                    try
+                    {
+                        int article = i;
+                        string name = "MedicineName" + i;
+                        string activeSubstance = "ActiveSubstance" + i;
+                        string country = "Country" + i;
+                        DateTime expirationDate = DateTime.Now.AddYears(1);
+                        string methodOfAdministration = "Oral";
+                        string releaseForm = "Tablet";
+                        int cntInPack = 20;
+                        bool receipeNeed = false;
+                        int temperature = 25;
+
+                        var medicine = new Medicine
+                        {
+                            Article = article,
+                            Name = name,
+                            ActiveSubstance = activeSubstance,
+                            Country = country,
+                            ExpirationDate = expirationDate,
+                            MethodOfAdministration = methodOfAdministration,
+                            ReleaseForm = releaseForm,
+                            CntInPack = cntInPack,
+                            ReceipeNeed = receipeNeed,
+                            Temperature = temperature
+                        };
+
+                        context.Medicines.Add(medicine);
+                        context.SaveChanges();
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }
+            }
+
+            // Створення та збереження виробників до бази даних за допомогою Mutex
+            void GenerateProducers()
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    try
+                    {
+                        mutex.WaitOne();
+
+                        var producer = new Producer
+                        {
+                            Code = i, // Припускаю, що Code - це унікальний ідентифікатор
+                            Name = "ProducerName" + i,
+                            LicenseNum = 1000 + i
+                        };
+
+                        context.Producers.Add(producer);
+                        context.SaveChanges();
+                    }
+                    finally
+                    {
+                        mutex.ReleaseMutex();
+                    }
+                }
+            }
+
+            //Зчитування та вивід покупців до консолі
+            void DisplayShoppers()
+            {
+                List<Shopper> shoppers;
+
+                lock (context)
+                {
+                    shoppers = context.Shoppers.ToList();
+                }
+
+                Console.WriteLine("\nУсі покупці:\n-----------------------------");
+
+                foreach (var shopper in shoppers)
+                {
+                    Console.WriteLine($"Покупець: {shopper.PhoneNum}\n-----------------------------");
+                }
+            }
+
+            //Зчитування та вивід ліків до консолі
+            void DisplayMedicines()
+            {
+                List<Medicine> medicines;
+
+                lock (context)
+                {
+                    medicines = context.Medicines.ToList();
+                }
+
+                Console.WriteLine("\nУсі ліки:\n-----------------------------");
+
+                foreach (var medicine in medicines)
+                {
+                    Console.WriteLine($"Ліки: {medicine.Name}, Країна: {medicine.Country}, Термін придатності: {medicine.ExpirationDate.ToShortDateString()}\n-----------------------------");
+                }
+            }
+
+            //Зчитування та вивід виробників до консолі
+            void DisplayProducers()
+            {
+                List<Producer> producers;
+
+                lock (context)
+                {
+                    producers = context.Producers.ToList();
+                }
+
+                Console.WriteLine("\nУсі виробники:\n-----------------------------");
+
+                foreach (var producer in producers)
+                {
+                    Console.WriteLine($"Виробник: {producer.Name}, Код: {producer.Code}\n-----------------------------");
+                }
+            }
+
+            //Task
+
+            List<Task> tasks = new List<Task>();
+
+            // Створення Shoppers, Medicines та Producers
+            for (int i = 1; i <= 3; i++)
+            {
+                int shopperIndex = i;
+                int medicineIndex = i;
+                int producerIndex = i;
+
+                Task shopperTask = Task.Run(async () =>
+                {
+                    await SaveShopperAsync($"ShopperPhoneNum{shopperIndex}", $"ShopperDiscountCard{shopperIndex}");
+                });
+
+                Task medicineTask = Task.Run(async () =>
+                {
+                    await SaveMedicineAsync($"MedicineName{medicineIndex}",  
+                        $"MedicineSubstance{medicineIndex}",
+                        $"MedicineCountry{medicineIndex}");
+                });
+
+                Task producerTask = Task.Run(async () =>
+                {
+                    await SaveProducerAsync($"ProducerName{producerIndex}");
+                });
+
+                tasks.Add(shopperTask);
+                tasks.Add(medicineTask);
+                tasks.Add(producerTask);
+
+                shopperTask.Start();
+                medicineTask.Start();
+                producerTask.Start();
+            }
+
+            await Task.WhenAll(tasks);
+            Console.WriteLine("Дані збережено в БД");
+
+            await DisplayShoppersAsync();
+            await DisplayMedicinesAsync();
+            await DisplayProducersAsync();
         }
+
+        //Збереження покупців до бази даних
+        static async Task SaveShopperAsync(string phoneNum, string iDDiscountCard)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                using (var context = new PharmacyContext())
+                {
+                    var shopper = new Shopper
+                    {
+                        PhoneNum = phoneNum,
+                        IDDiscountCard = iDDiscountCard
+                    };
+
+                    context.Shoppers.Add(shopper);
+                    await context.SaveChangesAsync();
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        //Збереження ліків до бази даних
+        static async Task SaveMedicineAsync(string name, string activeSubstance, string country)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                using (var context = new PharmacyContext())
+                {
+                    context.Medicines.Add(new Medicine
+                    {
+                        Name = name,
+                        ActiveSubstance = activeSubstance,
+                        Country = country
+                    });
+                    await context.SaveChangesAsync();
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        // Збереження виробників до бази даних
+        static async Task SaveProducerAsync(string name)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                using (var context = new PharmacyContext())
+                {
+                    context.Producers.Add(new Producer { Name = name});
+                    await context.SaveChangesAsync();
+                }
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        // Зчитування та вивід покупців
+        static async Task DisplayShoppersAsync()
+        {
+            using (var context = new PharmacyContext())
+            {
+                Task<List<Shopper>> shoppersTask = context.Shoppers.ToListAsync();
+
+                Console.WriteLine("\nЧитання даних...\n");
+
+                await shoppersTask;
+
+                if (shoppersTask.IsCompletedSuccessfully)
+                {
+                    List<Shopper> shoppers = shoppersTask.Result;
+
+                    Console.WriteLine("\nУсi покупцi:\n-----------------------------");
+
+                    // Виведення покупців за допомогою паралельного виконання
+                    var displayShopperTasks = shoppers.Select(async shopper =>
+                    {
+                        await Task.Yield(); //Для розподілу виконання в різних потоках
+
+                        Console.WriteLine($"Номер телефону: {shopper.PhoneNum}, Дисконтна картка: {shopper.IDDiscountCard}\n-----------------------------");
+                    });
+
+                    await Task.WhenAll(displayShopperTasks);
+                }
+            }
+        }
+
+        // Зчитування та вивід ліків
+        static async Task DisplayMedicinesAsync()
+        {
+            using (var context = new PharmacyContext())
+            {
+                Task<List<Medicine>> medicinesTask = context.Medicines.ToListAsync();
+
+                Console.WriteLine("\nЧитання даних...\n");
+
+                await medicinesTask;
+
+                if (medicinesTask.IsCompletedSuccessfully)
+                {
+                    List<Medicine> medicines = medicinesTask.Result;
+
+                    Console.WriteLine("\nУсi лiки:\n-----------------------------");
+
+                    // Виведення ліків за допомогою паралельного виконання
+                    var displayMedicineTasks = medicines.Select(async medicine =>
+                    {
+                        await Task.Yield(); //Для розподілу виконання в різних потоках
+
+                        Console.WriteLine($"Ліки: {medicine.Name},Активна речовина: {medicine.ActiveSubstance} Артикул: {medicine.Article}\n-----------------------------");
+                    });
+
+                    await Task.WhenAll(displayMedicineTasks);
+                }
+            }
+        }
+
+        //Зчитування та вивід виробників
+        static async Task DisplayProducersAsync()
+        {
+            using (var context = new PharmacyContext())
+            {
+                Task<List<Producer>> producersTask = context.Producers.ToListAsync();
+
+                Console.WriteLine("\nЧитання даних...\n");
+
+                await producersTask;
+
+                if (producersTask.IsCompletedSuccessfully)
+                {
+                    List<Producer> producers = producersTask.Result;
+
+                    Console.WriteLine("\nУсі виробники:\n-----------------------------");
+
+                    // Виведення виробників за допомогою паралельного виконання
+                    var displayProducerTasks = producers.Select(async producer =>
+                    {
+                        await Task.Yield(); //Для розподілу виконання в різних потоках
+
+                        Console.WriteLine($"Виробник: {producer.Name}, Код: {producer.Code}\n-----------------------------");
+                    });
+
+                    await Task.WhenAll(displayProducerTasks);
+                }
+            }
+        }
+
     }
 }
